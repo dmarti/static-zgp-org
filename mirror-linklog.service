@@ -1,0 +1,7 @@
+[Unit]
+Description=Mirror linklog
+
+[Service]
+User=mirror
+ExecStart=/usr/bin/wget -O /var/www/static/linklog/feed.xml https://rapids.aloodo.org/feed/
+

@@ -1,0 +1,10 @@
+[Unit]
+Description=Mirror linklog hourly
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1h
+Unit=mirror-linklog.service
+
+[Install]
+WantedBy=multi-user.target
