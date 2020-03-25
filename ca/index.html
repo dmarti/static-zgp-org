@@ -1,0 +1,222 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="alternate" type="application/rss+xml" title="RSS" href="https://blog.zgp.org/feed.xml" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes" />
+
+<title>WIP</title>
+<meta name="description" content="Description goes here.">
+
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" href="/favicon.ico">
+<meta name="theme-color" content="#000">
+
+<style type="text/css" media="all">
+<!--
+:focus {outline:none;}
+::-moz-focus-inner {border:0;}
+
+body {
+	font-family: monospace;
+	background-color: black;
+	color: #6f6;
+	font-size: 14pt;
+}
+
+main {
+    display: grid;
+	grid-gap: 2px;
+}
+
+-->
+</style>
+
+</head>
+<body>
+<main>
+</main>
+<script>
+
+var cols;
+var rows;
+var maxSize = 16;
+
+function randInt(min, max) {
+	min = Math.ceil(min);
+	max = Math.floor(max);
+	return Math.floor(Math.random() * (max - min)) + min; 
+}
+
+function randomCell() {
+	while(true) {
+		x = randInt(1, cols);
+		y = randInt(1, rows);
+		var id = x + '_' + y;
+		var tmp = document.getElementById(id);
+		if (tmp && tmp.size) {
+			return tmp;
+		}
+	}
+}
+
+function randomNeighbor(cell) {
+	while(true) {
+		var x = randInt(cell.x-1, cell.x+2);
+		var y = randInt(cell.y-1, cell.y+2);
+		var tmp = document.getElementById(x + '_' + y);
+		if(tmp && tmp.id != cell.id) {
+			return tmp;
+		}
+	}
+}
+
+function setSize(node, n) {
+	if (n > maxSize) {
+		n = maxSize;
+	}
+	if ((n < maxSize/8) || (n < 4)) {
+		n = 0;
+		setColor(node, 0);
+		localStorage.removeItem(node.id);
+	}
+	n = Math.floor(n);
+	node.size = n;
+	node.firstChild.style.setProperty('min-height', node.size + 'px');
+	node.firstChild.style.setProperty('width', node.size + 'px');
+	node.firstChild.style.setProperty('margin', (maxSize - node.size)/2 + 'px');
+	if (n == maxSize) {
+		localStorage.setItem(node.id, node.color);
+	} 
+}
+
+function setColor(node, color) {
+	node.color = color;
+	node.red = color >>> 16;
+	node.green = color >>> 8
+	node.blue = color & 256;
+//	if (node.red + node.green + node.blue > 512) {
+//		setSize(node, 0);
+//	}
+    var hexcolor = '#'+color.toString(16);
+	node.firstChild.style.setProperty('color', hexcolor);
+	node.firstChild.style.setProperty('background-color', hexcolor);
+	if ((node.green > 127) || (node.blue > 127)) {
+		node.happy = true;
+	} else {
+		node.happy = false;
+	}
+}
+
+function getAction(node) {
+	// true = cooperate, false = defect
+	var r = randInt(0, 256);
+	if (r < node.red) {
+		return false;
+	}
+	if (node.happy && r < node.green) {
+		return true;
+	}
+	if (r < node.blue) {
+		return true;
+	}
+	return false;
+}
+
+function boost(node, n) {
+	setSize(node, node.size * (1 + 0.1 * n) + 1);
+	node.happy = true;
+}
+
+function ding(node, n) {
+	setSize(node, node.size * (1 - 0.1 * n));
+	node.happy = false;
+}
+
+function getOutcome(node1, node2) {
+	if (node2.size == 0) {
+		if (node1.size > maxSize/2) {
+			setColor(node2, node1.color);
+			setSize(node2, node1.size/2);
+			setSize(node1, node1.size/2);
+		}
+		return;
+	}
+
+	var a1 = getAction(node1);
+	var a2 = getAction(node2);
+	if (!a1 && !a2) {
+		ding(node1, 1);
+		ding(node2, 1);
+		return;
+	}
+	if (a1 && a2) {
+		boost(node1, 1);
+		boost(node2, 1);
+		return;
+	}
+	if (a2) {
+		boost(node1, 3);
+		ding(node2, 3);
+		return;
+	}
+	if (a1) {
+		boost(node1, 3);
+		ding(node2, 3);
+	}
+}
+
+function setup() {
+	console.log("setup running");
+	var m = document.getElementsByTagName('main')[0];
+
+	cols = Math.floor(window.innerWidth / (maxSize + 2));
+	rows = Math.floor(window.innerHeight / (maxSize + 2));
+
+	for (var i = 1; i < rows; i++) {
+		for (var j = 1; j < cols; j++) {
+			var inner = document.createElement('div');
+			var c = document.createElement('div');
+			c.id = j + "_" + i;
+			c.y = i;
+			c.x = j;
+			inner.appendChild(document.createTextNode(' '));
+			c.appendChild(inner);
+			c.classList.add('cell');
+			setSize(c, randInt(1, maxSize));
+			var tmp = localStorage.getItem(c.id);
+			if (tmp) {
+				setColor(c, parseInt(tmp));
+				localStorage.removeItem(c.id);
+			} else if (!randInt(0,8)) {
+				setColor(c, randInt(257, 16777216));
+			} else {
+				setSize(c, 0);
+				setColor(c, 0);
+			}
+			c.style.setProperty('grid-row', i);
+            c.style.setProperty('grid-column', j);
+            c.style.setProperty('min-height', maxSize);
+            c.style.setProperty('min-width', maxSize);
+			m.appendChild(c);
+		}
+	}
+}
+
+function tick() {
+	for (var i=0; i<100; i++) {
+		var c = randomCell();
+		var n = randomNeighbor(c);
+		var result = getOutcome(c, n);
+	}
+	window.requestAnimationFrame(tick);
+}
+
+window.addEventListener("load", setup, false);
+window.requestAnimationFrame(tick);
+
+</script>
+</body></html>
+
