@@ -42,7 +42,7 @@ main {
 
 var cols;
 var rows;
-var maxSize = 16;
+var maxSize = 32;
 
 function randInt(min, max) {
 	min = Math.ceil(min);
@@ -77,7 +77,7 @@ function setSize(node, n) {
 	if (n > maxSize) {
 		n = maxSize;
 	}
-	if ((n < maxSize/8) || (n < 4)) {
+	if (n < 2) {
 		n = 0;
 		setColor(node, 0);
 		localStorage.removeItem(node.id);
@@ -94,12 +94,10 @@ function setSize(node, n) {
 
 function setColor(node, color) {
 	node.color = color;
+	console.log ("color " + color)
 	node.red = color >>> 16;
 	node.green = color >>> 8
 	node.blue = color & 256;
-//	if (node.red + node.green + node.blue > 512) {
-//		setSize(node, 0);
-//	}
     var hexcolor = '#'+color.toString(16);
 	node.firstChild.style.setProperty('color', hexcolor);
 	node.firstChild.style.setProperty('background-color', hexcolor);
@@ -137,7 +135,8 @@ function ding(node, n) {
 
 function getOutcome(node1, node2) {
 	if (node2.size == 0) {
-		if (node1.size > maxSize/2) {
+		if (node1.size > maxSize/8) {
+			console.log(node1.id);
 			setColor(node2, node1.color);
 			setSize(node2, node1.size/2);
 			setSize(node1, node1.size/2);
@@ -148,8 +147,8 @@ function getOutcome(node1, node2) {
 	var a1 = getAction(node1);
 	var a2 = getAction(node2);
 	if (!a1 && !a2) {
-		ding(node1, 1);
-		ding(node2, 1);
+		ding(node1, 2);
+		ding(node2, 2);
 		return;
 	}
 	if (a1 && a2) {
@@ -158,13 +157,13 @@ function getOutcome(node1, node2) {
 		return;
 	}
 	if (a2) {
-		boost(node1, 3);
-		ding(node2, 3);
+		boost(node1, 5);
+		ding(node2, 8);
 		return;
 	}
 	if (a1) {
-		boost(node1, 3);
-		ding(node2, 3);
+		boost(node1, 5);
+		ding(node2, 8);
 	}
 }
 
@@ -185,11 +184,10 @@ function setup() {
 			inner.appendChild(document.createTextNode(' '));
 			c.appendChild(inner);
 			c.classList.add('cell');
-			setSize(c, randInt(1, maxSize));
+			setSize(c, randInt(maxSize/4, maxSize));
 			var tmp = localStorage.getItem(c.id);
 			if (tmp) {
 				setColor(c, parseInt(tmp));
-				localStorage.removeItem(c.id);
 			} else if (!randInt(0,8)) {
 				setColor(c, randInt(257, 16777216));
 			} else {
@@ -203,10 +201,11 @@ function setup() {
 			m.appendChild(c);
 		}
 	}
+	localStorage.clear();
 }
 
 function tick() {
-	for (var i=0; i<100; i++) {
+	for (var i=0; i<(rows * cols)/400; i++) {
 		var c = randomCell();
 		var n = randomNeighbor(c);
 		var result = getOutcome(c, n);

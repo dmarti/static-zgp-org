@@ -16,6 +16,7 @@ service apache2 reload
 mkdir -p $DOCROOT/linklog
 chown root.www $DOCROOT/linklog
 chmod g+rwx $DOCROOT/linklog
+cp index.html $DOCROOT
 
 cp mirror-linklog.service mirror-linklog.timer /etc/systemd/system
 systemctl daemon-reload
