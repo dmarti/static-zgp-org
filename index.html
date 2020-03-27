@@ -42,7 +42,7 @@ main {
 
 var cols;
 var rows;
-var maxSize = 32;
+var maxSize = 12;
 
 function randInt(min, max) {
 	min = Math.ceil(min);
@@ -77,7 +77,7 @@ function setSize(node, n) {
 	if (n > maxSize) {
 		n = maxSize;
 	}
-	if (n < 2) {
+	if (n < 3) {
 		n = 0;
 		setColor(node, 0);
 		localStorage.removeItem(node.id);
@@ -94,18 +94,16 @@ function setSize(node, n) {
 
 function setColor(node, color) {
 	node.color = color;
-	console.log ("color " + color)
 	node.red = color >>> 16;
 	node.green = color >>> 8
 	node.blue = color & 256;
+	if (node.red < 16 && node.green < 16 && node.blue < 16) {
+		node.size = 0;
+	}
     var hexcolor = '#'+color.toString(16);
 	node.firstChild.style.setProperty('color', hexcolor);
 	node.firstChild.style.setProperty('background-color', hexcolor);
-	if ((node.green > 127) || (node.blue > 127)) {
-		node.happy = true;
-	} else {
-		node.happy = false;
-	}
+	node.happy = true;
 }
 
 function getAction(node) {
@@ -114,13 +112,17 @@ function getAction(node) {
 	if (r < node.red) {
 		return false;
 	}
-	if (node.happy && r < node.green) {
-		return true;
-	}
 	if (r < node.blue) {
 		return true;
 	}
-	return false;
+	if (r < node.green) {
+		if (node.happy) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	return true;
 }
 
 function boost(node, n) {
@@ -129,17 +131,18 @@ function boost(node, n) {
 }
 
 function ding(node, n) {
-	setSize(node, node.size * (1 - 0.1 * n));
+	setSize(node, (node.size * (1 - 0.1 * n)) - 1);
 	node.happy = false;
 }
 
 function getOutcome(node1, node2) {
 	if (node2.size == 0) {
-		if (node1.size > maxSize/8) {
-			console.log(node1.id);
+		if (node1.size > maxSize/2 && node1.color != node2.color) {
 			setColor(node2, node1.color);
-			setSize(node2, node1.size/2);
-			setSize(node1, node1.size/2);
+			setSize(node2, node1.size * (3/4) + 4);
+			setSize(node1, node1.size * (1/4) + 0);
+			node1.happy = true;
+			node2.happy = true;
 		}
 		return;
 	}
@@ -147,8 +150,8 @@ function getOutcome(node1, node2) {
 	var a1 = getAction(node1);
 	var a2 = getAction(node2);
 	if (!a1 && !a2) {
-		ding(node1, 2);
-		ding(node2, 2);
+		ding(node1, 5);
+		ding(node2, 5);
 		return;
 	}
 	if (a1 && a2) {
@@ -157,13 +160,14 @@ function getOutcome(node1, node2) {
 		return;
 	}
 	if (a2) {
-		boost(node1, 5);
-		ding(node2, 8);
+		boost(node1, 15);
+		ding(node2, 100);
 		return;
 	}
 	if (a1) {
-		boost(node1, 5);
-		ding(node2, 8);
+		boost(node2, 15);
+		ding(node1, 100);
+		return;
 	}
 }
 
@@ -184,16 +188,13 @@ function setup() {
 			inner.appendChild(document.createTextNode(' '));
 			c.appendChild(inner);
 			c.classList.add('cell');
-			setSize(c, randInt(maxSize/4, maxSize));
+			setSize(c, randInt(0, maxSize/2));
 			var tmp = localStorage.getItem(c.id);
 			if (tmp) {
 				setColor(c, parseInt(tmp));
-			} else if (!randInt(0,8)) {
-				setColor(c, randInt(257, 16777216));
 			} else {
-				setSize(c, 0);
-				setColor(c, 0);
-			}
+				setColor(c, randInt(0, 16777216));
+			} 
 			c.style.setProperty('grid-row', i);
             c.style.setProperty('grid-column', j);
             c.style.setProperty('min-height', maxSize);
