@@ -28,7 +28,7 @@ body {
 
 main {
     display: grid;
-	grid-gap: 2px;
+	grid-gap: 0px;
 }
 
 -->
@@ -42,7 +42,7 @@ main {
 
 var cols;
 var rows;
-var maxSize = 16;
+var maxSize = 24; 
 var minSize = 4;
 
 function randInt(min, max) {
@@ -75,18 +75,16 @@ function randomNeighbor(cell) {
 }
 
 function setSize(node, n) {
-	var esize;
 	if (n > maxSize) {
 		n = maxSize;
 	}
 	if (n < minSize) {
 		n = 0;
-		setColor(node, 200);
-		esize = maxSize;
+		localStorage.removeItem(node.id);
 	}
 	n = Math.floor(n);
 	node.size = n;
-	esize = node.size;
+	var esize = node.size;
 	node.firstChild.style.setProperty('min-height', esize + 'px');
 	node.firstChild.style.setProperty('width', esize + 'px');
 	node.firstChild.style.setProperty('margin', (maxSize - esize)/2 + 'px');
@@ -140,12 +138,13 @@ function ding(node, n) {
 
 function getOutcome(node1, node2) {
 	if (node2.size == 0) {
-		if (node1.size > minSize * 3/2 && node1.color != node2.color) {
+		if (node1.size > minSize * 2 && node1.color != node2.color) {
 			setColor(node2, node1.color);
 			setSize(node2, node1.size * (2/3) + 1);
 			setSize(node1, node1.size * (1/3) + 1);
 			node1.happy = true;
 			node2.happy = true;
+			return;
 		}
 		boost(node1, 1);
 		return;
@@ -179,8 +178,8 @@ function setup() {
 	console.log("setup running");
 	var m = document.getElementsByTagName('main')[0];
 
-	cols = Math.floor(window.innerWidth / (maxSize + 2));
-	rows = Math.floor(window.innerHeight / (maxSize + 2));
+	cols = Math.floor(window.innerWidth / (maxSize + 0));
+	rows = Math.floor(window.innerHeight / (maxSize + 0));
 
 	for (var i = 1; i < rows; i++) {
 		for (var j = 1; j < cols; j++) {
@@ -192,18 +191,17 @@ function setup() {
 			inner.appendChild(document.createTextNode(' '));
 			c.appendChild(inner);
 			c.classList.add('cell');
-			setSize(c, randInt(0, minSize+1));
+			setSize(c, randInt(2, minSize + 1));
 			var tmp = localStorage.getItem(c.id);
 			if (tmp) {
 				setColor(c, parseInt(tmp));
-				setSize(c, maxSize);
 			} else {
 				setColor(c, randInt(0, 16777216));
 			} 
 			c.style.setProperty('grid-row', i);
             c.style.setProperty('grid-column', j);
-            c.style.setProperty('min-height', maxSize);
-            c.style.setProperty('min-width', maxSize);
+            c.style.setProperty('min-height', maxSize + 'px');
+            c.style.setProperty('min-width', maxSize + 'px');
 			m.appendChild(c);
 		}
 	}
